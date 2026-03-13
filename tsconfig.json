@@ -5,6 +5,7 @@
     "target": "ESNext",
     "module": "ESNext",
     "moduleDetection": "force",
+    "jsxImportSource": "hono/jsx",
     "jsx": "react-jsx",
     "allowJs": true,
 

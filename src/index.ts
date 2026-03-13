@@ -1,28 +1,25 @@
 import { Hono } from "hono";
 import { Server as Engine } from "@socket.io/bun-engine";
 import { newRoomsApi } from "./api/rooms";
-import index from "./ui/index/index.html";
-import roomUi from "./ui/rooms/index.tsx";
-
+import HomeView from "./ui/home/index.html";
+import RoomView from "./ui/rooms/index.html";
 
 const engine = new Engine();
 const { websocket } = engine.handler();
 
-const app = new Hono();
-
-const roomsApi = newRoomsApi(engine);
-app.route("/api/rooms", roomsApi);
+const roomsApi = newRoomsApi("/api/rooms", engine);
 
 const server = Bun.serve({
   port: 3000,
   idleTimeout: 30,
   routes: {
-    "/": index,
-    "/rooms/:roomName": roomUi,
+    "/": HomeView,
+    "/rooms/:roomName": RoomView,
     "/socket.io/": (req, server) => engine.handleRequest(req, server),
     "/api/health": new Response("OK"),
+    "/api/rooms/*": roomsApi.fetch,
   },
-  fetch: app.fetch,
+  fetch: () => new Response("bun not found", { status: 404 }),
   websocket,
 });
 

@@ -18,7 +18,7 @@ class Room {
     this.updatedAt = new Date();
   }
 
-  vote(playerId: string, card: string) {
+  vote(playerId: string, card: string | null) {
     const player = this.players.get(playerId);
     if (player === undefined) {
       return;
@@ -31,7 +31,7 @@ class Room {
   reset() {
     this.revealed = false;
     for (const player of this.players.values()) {
-      player.card = "";
+      player.card = null;
     }
     this.updatedAt = new Date();
   }
@@ -48,11 +48,12 @@ class Room {
     return this.players.values().find((p) => p.authToken === authToken);
   }
 
-  asResponse() {
+  asResponse(reset? : boolean) {
     return {
       name: this.name,
       allowedCards: this.allowedCards,
       revealed: this.revealed,
+      reset,
       players: Object.fromEntries(
         this.players.entries().map(([id, p]) => [
           id,
@@ -60,7 +61,7 @@ class Room {
             id: p.id,
             name: p.name,
             card: this.revealed ? p.card : null,
-            voted: p.card !== "",
+            voted: p.card !== null,
           },
         ]),
       ),
@@ -68,13 +69,14 @@ class Room {
   }
 }
 
-type RoomResponse = ReturnType<Room["asResponse"]>;
+type RoomUpdate = ReturnType<Room["asResponse"]>;
+type PlayerUpdate = RoomUpdate["players"][string];
 
 class Player {
   id: string;
   name: string;
   authToken: string;
-  card = "";
+  card: string | null = null;
   updatedAt = new Date();
 
   constructor(name?: string) {
@@ -85,25 +87,32 @@ class Player {
 }
 
 type CreateRoomResponse = {
-  name : string
-}
+  name: Room["name"];
+};
 
 type JoinRoomRequest = {
-  username?: string;
-  authToken?: string;
+  username?: Player["name"];
+  authToken?: Player["authToken"];
 };
 
 type JoinRoomResponse = {
-  playerId: string;
-  authToken: string;
-  username: string;
-  selectedCard: string;
-  room: RoomResponse;
+  playerId: Player["id"];
+  authToken: Player["authToken"];
+  username: Player["name"];
+  selectedCard: Player["card"];
+  room: RoomUpdate;
 };
 
 type VoteRequest = {
-  card: string;
+  card: Player["card"];
 };
 
-export type { JoinRoomRequest, JoinRoomResponse, VoteRequest, CreateRoomResponse };
+export type {
+  JoinRoomRequest,
+  JoinRoomResponse,
+  VoteRequest,
+  CreateRoomResponse,
+  RoomUpdate,
+  PlayerUpdate,
+};
 export { Room, Player };

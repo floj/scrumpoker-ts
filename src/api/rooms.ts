@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { logger } from "hono/logger";
 import { Server } from "socket.io";
 import { Server as Engine } from "@socket.io/bun-engine";
 
@@ -11,13 +12,13 @@ import {
 import { Room } from "./types";
 
 import { defaultCards } from "./constants";
-import { faker, pl } from "@faker-js/faker";
+import { faker } from "@faker-js/faker";
 
 function newRoomName() {
   return faker.food.dish();
 }
 
-function newRoomsApi(engine: Engine): Hono {
+function newRoomsApi(base: string, engine: Engine): Hono {
   const rooms = new Map<string, Room>();
 
   const io = new Server();
@@ -26,7 +27,7 @@ function newRoomsApi(engine: Engine): Hono {
   io.on("connection", (socket) => {
     const roomName = socket.handshake.headers["roomname"] as string | undefined;
     const authToken = socket.handshake.headers["x-token"] as string | undefined;
-    console.log("Socket connection attempt", socket.handshake.headers);
+    // console.log("Socket connection attempt", socket.handshake.headers);
 
     if (roomName === undefined) {
       console.log("Client connected, roomName missing");
@@ -64,8 +65,9 @@ function newRoomsApi(engine: Engine): Hono {
   });
 
   const api = new Hono();
+  api.use(logger());
 
-  api.post("/", (c) => {
+  api.post(`${base}/`, (c) => {
     let name = newRoomName();
     for (let i = 0; i < 10; i++) {
       if (!rooms.has(name)) {
@@ -81,7 +83,7 @@ function newRoomsApi(engine: Engine): Hono {
     return c.redirect(`/rooms/${room.name}`);
   });
 
-  api.get("/:id", (c) => {
+  api.get(`${base}/:id`, (c) => {
     const { id } = c.req.param();
     const room = rooms.get(id);
     if (room === undefined) {
@@ -90,11 +92,12 @@ function newRoomsApi(engine: Engine): Hono {
     return c.json(room.asResponse());
   });
 
-  api.post("/:id/join", async (c) => {
+  api.post(`${base}/:id/join`, async (c) => {
     const { id } = c.req.param();
     const { create } = c.req.query();
 
     let room = rooms.get(id);
+    console.log("Join room attempt", { roomName: id, create, room });
     if (room === undefined) {
       if (create !== "true") {
         return c.json({ error: "Room not found" }, 404);
@@ -109,8 +112,12 @@ function newRoomsApi(engine: Engine): Hono {
 
     const rejoined = player !== undefined;
     if (player === undefined) {
-      player = new Player(req.username);
+      player = new Player();
       room.addPlayer(player);
+    }
+    player.name = req.username ?? "";
+    if (player.name === "") {
+      player.name = faker.person.fullName();
     }
 
     console.log("Player joined", {
@@ -131,7 +138,7 @@ function newRoomsApi(engine: Engine): Hono {
     } as JoinRoomResponse);
   });
 
-  api.post("/:id/vote", async (c) => {
+  api.post(`${base}/:id/vote`, async (c) => {
     const { id } = c.req.param();
     const authToken = c.req.header("X-Token");
 
@@ -146,8 +153,8 @@ function newRoomsApi(engine: Engine): Hono {
     }
 
     const req = (await c.req.json()) as VoteRequest;
-
-    if (!room.allowedCards.includes(req.card)) {
+    console.log("Vote attempt", { req });
+    if (req.card !== null && !room.allowedCards.includes(req.card)) {
       return c.json({ error: "Card not allowed in this room" }, 400);
     }
 
@@ -159,10 +166,11 @@ function newRoomsApi(engine: Engine): Hono {
       card: player.card,
     });
     io.to(room.name).emit("roomUpdate", room.asResponse());
-    return c.status(204);
+    c.status(204);
+    return c.text("");
   });
 
-  api.post("/:id/reveal", async (c) => {
+  api.post(`${base}/:id/reveal`, async (c) => {
     const { id } = c.req.param();
     const authToken = c.req.header("X-Token");
 
@@ -184,10 +192,11 @@ function newRoomsApi(engine: Engine): Hono {
       roomName: room.name,
     });
     io.to(room.name).emit("roomUpdate", room.asResponse());
-    return c.status(204);
+    c.status(204);
+    return c.text("");
   });
 
-  api.post("/:id/reset", async (c) => {
+  api.post(`${base}/:id/reset`, async (c) => {
     const { id } = c.req.param();
     const authToken = c.req.header("X-Token");
 
@@ -208,8 +217,9 @@ function newRoomsApi(engine: Engine): Hono {
       playerName: player.name,
       roomName: room.name,
     });
-    io.to(room.name).emit("roomUpdate", room.asResponse());
-    return c.status(204);
+    io.to(room.name).emit("roomUpdate", room.asResponse(true));
+    c.status(204);
+    return c.text("");
   });
 
   return api;

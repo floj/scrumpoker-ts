@@ -1,16 +1,17 @@
 {
   "name": "estimates",
   "scripts": {
-    "dev": "bun run --hot src/index.ts"
+    "dev": "bun run --hot src/index.ts",
+    "run": "bun run src/index.ts"
   },
   "dependencies": {
-    "@faker-js/faker": "^10.3.0",
-    "@socket.io/bun-engine": "^0.1.0",
-    "@solidjs/start": "^1.3.2",
     "hono": "^4.12.7",
+    "bulma": "^1.0.4",
+    "@socket.io/bun-engine": "^0.1.0",
     "socket.io": "^4.8.3",
     "socket.io-client": "^4.8.3",
-    "solid-js": "^1.9.11"
+    "@faker-js/faker": "^10.3.0",
+    "js-toast-notifier": "^1.0.14"
   },
   "devDependencies": {
     "@types/bun": "latest"

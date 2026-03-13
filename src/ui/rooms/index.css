@@ -1,0 +1,79 @@
+#app {
+  width: 720px;
+  margin: 1rem auto;
+}
+
+.vcard {
+  width: 5rem;
+  height: 7rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 2rem;
+  border: 2px solid var(--bulma-primary);
+  padding: 1rem;
+  transition: transform 0.1s ease-in-out;
+}
+
+.vcard-selected {
+  background-color: var(--bulma-primary);
+  color: white;
+  border-color: var(--bulma-primary);
+  transform: translateY(-0.5rem);
+}
+
+.vcard:hover {
+  transform: translateY(-0.5rem);
+}
+
+.vcard-container {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-content: flex-start;
+  gap: 1rem;
+}
+
+.playerlist {
+  width: 100%;
+  & :last-child {
+    border-bottom: none;
+  }
+}
+.playerlist-item {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  justify-content: space-between;
+  align-items: stretch;
+  align-content: stretch;
+  gap: 8px;
+  line-height: 3rem;
+
+  border-bottom: 1px solid var(--bulma-border);
+}
+
+.main {
+  display: flex;
+  flex-direction: column;
+  flex-wrap: nowrap;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 8px;
+}
+
+.settings {
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  justify-content: flex-end;
+  align-items: stretch;
+  align-content: stretch;
+  gap: 8px;
+}
+
+.capitalized::first-letter {
+  text-transform: capitalize;
+}
