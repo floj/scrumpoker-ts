@@ -107,7 +107,11 @@ function App() {
         reset={() => roomService.resetCards()}
       ></RoomActions>
 
-      <PlayerList players={players} revealed={revealed} />
+      <PlayerList
+        players={players}
+        revealed={revealed}
+        allowedCards={allowedCards}
+      />
 
       <CardSelector
         allowedCards={allowedCards}

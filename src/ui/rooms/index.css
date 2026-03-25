@@ -12,18 +12,18 @@
   font-size: 2rem;
   border: 2px solid var(--bulma-primary);
   padding: 1rem;
-  transition: transform 0.1s ease-in-out;
+  transition: transform 0.25s ease-in-out;
+}
+
+.vcard:hover,
+.vcard-selected {
+  transform: translateY(-0.5rem) rotate(-3deg);
 }
 
 .vcard-selected {
   background-color: var(--bulma-primary);
   color: white;
   border-color: var(--bulma-primary);
-  transform: translateY(-0.5rem);
-}
-
-.vcard:hover {
-  transform: translateY(-0.5rem);
 }
 
 .vcard-container {
