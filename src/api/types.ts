@@ -5,6 +5,7 @@ class Room {
   createdAt = new Date();
   updatedAt = new Date();
   players: Map<string, Player> = new Map();
+  playersAuth: Map<string, Player> = new Map();
   allowedCards: string[];
   revealed = false;
 
@@ -15,6 +16,7 @@ class Room {
 
   addPlayer(player: Player) {
     this.players.set(player.id, player);
+    this.playersAuth.set(player.authToken, player);
     this.updatedAt = new Date();
   }
 
@@ -45,10 +47,10 @@ class Room {
     if (authToken === undefined) {
       return undefined;
     }
-    return this.players.values().find((p) => p.authToken === authToken);
+    return this.playersAuth.get(authToken);
   }
 
-  asResponse(reset? : boolean) {
+  asResponse(reset?: boolean) {
     return {
       name: this.name,
       allowedCards: this.allowedCards,
@@ -66,6 +68,24 @@ class Room {
         ]),
       ),
     };
+  }
+
+  cleanup() {
+    const inactiveThreshold = 1000 * 60 * 5; // 5 minutes
+    const now = Date.now();
+    const pp = Array.from(this.players.values());
+    for (const player of pp) {
+      if (now - player.updatedAt.getTime() > inactiveThreshold) {
+        console.log("Removing inactive player", {
+          roomName: this.name,
+          playerId: player.id,
+          playerName: player.name,
+        });
+        this.players.delete(player.id);
+        this.playersAuth.delete(player.authToken);
+      }
+    }
+    return this.players.size === 0;
   }
 }
 

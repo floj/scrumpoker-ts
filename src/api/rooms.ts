@@ -222,6 +222,21 @@ function newRoomsApi(base: string, engine: Engine): Hono {
     return c.text("");
   });
 
+  // run room cleanup every 15 minutes, removing rooms that have been inactive for more than 1 hour
+  setInterval(
+    () => {
+      const now = Date.now();
+      const rr = Array.from(rooms.values());
+      for (const room of rr) {
+        if (room.cleanup()) {
+          console.log("Removing inactive room", { roomName: room.name });
+          rooms.delete(room.name);
+        }
+      }
+    },
+    15 * 60 * 1000,
+  );
+
   return api;
 }
 
