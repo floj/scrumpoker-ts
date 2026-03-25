@@ -14,31 +14,10 @@ import "bulma/css/bulma.css";
 
 import RoomActions from "./components/RoomActions";
 import Settings from "./components/Settings";
+import { toaster } from "./toaster";
 
 const roomName = decodeURIComponent(window.location.pathname.split("/").pop()!);
 const usernameFromStorage = localStorage.getItem(`username`) ?? "";
-
-// async function doJoin(roomName: string) {
-//   const joinResp = await fetch(`/api/rooms/${roomName}/join?create=true`, {
-//     method: "POST",
-//     headers: {
-//       "Content-Type": "application/json",
-//     },
-//     body: JSON.stringify({
-//       username: usernameFromStorage ?? "",
-//       authToken: authTokenFromStorage ?? "",
-//     }),
-//   });
-
-//   if (!joinResp.ok) {
-//     throw new Error("Failed to join room");
-//   }
-
-//   const joinBody = (await joinResp.json()) as JoinRoomResponse;
-//   return joinBody;
-// }
-
-// let joinInfo = await doJoin(roomName);
 
 let authToken = localStorage.getItem(`token-${roomName}`) ?? "";
 const authTokenProvider = () => {
@@ -48,15 +27,7 @@ const authTokenProvider = () => {
 const roomService = new RoomService("/api", roomName, authTokenProvider);
 
 const joinInfo = await roomService.joinRoom(usernameFromStorage, true);
-let { playerId } = joinInfo;
 authToken = joinInfo.authToken;
-
-// // await updateUsername(usernameFromStorage);
-
-// function updateRoom(room: RoomResponse) {
-//   // setAllowedCards(room.allowedCards);
-//   // setIsRevealed(room.revealed);
-// }
 
 function App() {
   const [username, setUsername] = useState(joinInfo.username);
@@ -74,9 +45,6 @@ function App() {
 
     setUsername(joinInfo.username);
     setSelectedCard(joinInfo.selectedCard);
-    //   // setSelectedCard(joinInfo.selectedCard);
-    //   // setPlayerId(joinInfo.playerId);
-    //   updateRoom(joinInfo.room);
   }
 
   async function updateUsername(newUsername: string) {
@@ -86,8 +54,12 @@ function App() {
 
   async function updateSelectedCard(card: string) {
     const newCard = selectedCard == card ? null : card;
-    await roomService.submitVote(newCard);
-    setSelectedCard(newCard);
+    try {
+      await roomService.submitVote(newCard);
+      setSelectedCard(newCard);
+    } catch (err) {
+      toaster.error("Failed to submit vote", {});
+    }
   }
 
   useEffect(() => {
@@ -98,6 +70,18 @@ function App() {
         roomName: roomName,
         "x-token": authToken,
       },
+    });
+
+    socket.on("connect_error", (err) => {
+      console.error("Socket connection error", err);
+    });
+
+    socket.on("disconnect", (reason) => {
+      console.warn("Socket disconnected", reason);
+    });
+
+    socket.on("error", (err) => {
+      console.error("Socket error", err);
     });
 
     socket.on("roomUpdate", (room: RoomUpdate) => {
@@ -117,7 +101,6 @@ function App() {
       <h1 class="is-size-1">no-fuzz estimates</h1>
       <UsernameInput username={username} updateUsername={updateUsername} />
 
-      {/* <CardActions :revealed="revealed" @reveal="revealCards" @reset="resetCards" /> */}
       <RoomActions
         revealed={revealed}
         reveal={() => roomService.revealCards()}

@@ -19,7 +19,7 @@ function buildUrl(
 }
 
 const defaultErrHandler = async (
-  err: any,
+  err: unknown,
   url: string,
   options: RequestInit,
 ) => {

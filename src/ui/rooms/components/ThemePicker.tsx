@@ -24,6 +24,9 @@ export default function ThemePicker({}: Props) {
       return;
     }
     document.documentElement.setAttribute("data-theme", resolved);
+    if (theme !== null) {
+      localStorage.setItem("theme", resolved);
+    }
   }
 
   useEffect(() => updateTheme(theme), [theme]);

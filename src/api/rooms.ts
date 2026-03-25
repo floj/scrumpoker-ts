@@ -68,6 +68,10 @@ function newRoomsApi(base: string, engine: Engine): Hono {
   api.use(logger());
 
   api.post(`${base}/`, (c) => {
+    if (rooms.size >= 100) {
+      return c.json({ error: "Maximum number of rooms reached" }, 503);
+    }
+
     let name = newRoomName();
     for (let i = 0; i < 10; i++) {
       if (!rooms.has(name)) {
@@ -118,6 +122,9 @@ function newRoomsApi(base: string, engine: Engine): Hono {
     player.name = req.username ?? "";
     if (player.name === "") {
       player.name = faker.person.fullName();
+    }
+    if (player.name.length > 40) {
+      player.name = player.name.slice(0, 37) + "...";
     }
 
     console.log("Player joined", {
@@ -222,19 +229,22 @@ function newRoomsApi(base: string, engine: Engine): Hono {
     return c.text("");
   });
 
-  // run room cleanup every 15 minutes, removing rooms that have been inactive for more than 1 hour
+  // run room cleanup every 5 minutes, removing rooms that have been inactive
   setInterval(
     () => {
-      const now = Date.now();
-      const rr = Array.from(rooms.values());
-      for (const room of rr) {
-        if (room.cleanup()) {
-          console.log("Removing inactive room", { roomName: room.name });
-          rooms.delete(room.name);
+      try {
+        const rr = Array.from(rooms.values());
+        for (const room of rr) {
+          if (room.cleanup()) {
+            console.log("Removing inactive room", { roomName: room.name });
+            rooms.delete(room.name);
+          }
         }
+      } catch (err) {
+        console.error("Error during room cleanup", err);
       }
     },
-    15 * 60 * 1000,
+    5 * 60 * 1000,
   );
 
   return api;
